@@ -817,8 +817,29 @@ public class FressianReader implements Reader, Closeable {
         return objects;
     }
 
+    private ThreadLocal<ArrayList> closedListBufferCache = new ThreadLocal<ArrayList>() {
+        protected ArrayList initialValue() {
+            return new ArrayList();
+        }
+    };
+
+    private static final boolean useClosedListBufferCache = 
+      System.getProperty("fressian.useClosedListBufferCache", "false").equals("true");
+
     private Object[] readClosedList() throws IOException {
-        ArrayList objects = new ArrayList();
+        if(useClosedListBufferCache) {
+            ArrayList objects = closedListBufferCache.get();
+            try {
+                return readClosedList(objects);
+            } finally {
+                objects.clear();
+            }
+        } else {
+            return readClosedList(new ArrayList());
+        }
+    }
+
+    private Object[] readClosedList(ArrayList objects) throws IOException {
         while (true) {
             int code = readNextCode();
             if (code == Codes.END_COLLECTION) {

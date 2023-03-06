@@ -34,10 +34,24 @@ public class RawInput implements Closeable {
         this.dis = new DataInputStream(this.is);
     }
 
+    private static final boolean useCachedEOFException = 
+      System.getProperty("fressian.useCachedEOFException", "false").equals("true");
+    
+    private static final EOFException eof = new EOFException() {
+        @Override
+        public synchronized Throwable fillInStackTrace() {
+            // disables the stack trace
+            return this;
+        }
+    };
+
     public int readRawByte() throws IOException {
         int result = is.read();
         if (result < 0) {
-            throw new EOFException();
+            if(useCachedEOFException)
+                throw eof;
+            else
+                throw new EOFException();
         }
         bytesRead++;
         return result;
