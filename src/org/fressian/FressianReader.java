@@ -274,6 +274,9 @@ public class FressianReader implements Reader, Closeable {
         return read(readNextCode());
     }
 
+    private static final boolean useInlineUUIDReader = 
+      System.getProperty("fressian.useInlineUUIDReader", "false").equals("true");
+
     private Object read(int code) throws IOException {
         Object result;
         switch (code) {
@@ -511,7 +514,11 @@ public class FressianReader implements Reader, Closeable {
                 break;
 
             case Codes.UUID:
-                result = handleStruct("uuid", 2);
+                if(useInlineUUIDReader) {
+                    result = new UUID(readInt(), readInt());
+                } else {
+                    result = handleStruct("uuid", 2);
+                }
                 break;
 
             case Codes.REGEX:
